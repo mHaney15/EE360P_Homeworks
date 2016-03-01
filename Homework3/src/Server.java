@@ -55,13 +55,10 @@ public class Server {
 		}
 			
 		// handle request from clients
-		TCPSocketInterpreter tcpSI = server.new TCPSocketInterpreter();
-		pool.execute(tcpSI);
+		TCPSocketHandler tcpSH = server.new TCPSocketHandler();
+		pool.execute(tcpSH);
 		while(true){}
-    	
     
-		//tcpSocket.close();
-		//udpSocket.close();
     } catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -96,10 +93,10 @@ public class Server {
 		}
 	}
 	
-	public class TCPSocketInterpreter implements Runnable{
-		private class socketHandler implements Runnable{
+	public class TCPSocketHandler implements Runnable{
+		private class TCPsocketInterpreter implements Runnable{
 			Socket socket;
-			socketHandler(Socket socket){
+			TCPsocketInterpreter(Socket socket){
 				this.socket = socket;
 			}
 			
@@ -111,7 +108,8 @@ public class Server {
 					BufferedWriter socketOut = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 					String message = socketIn.readLine();
 					//Do something with message....
-					socketOut.write(message);
+					socketOut.write(message+"\n");
+					socketOut.flush();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -120,12 +118,12 @@ public class Server {
 		}
 		
 		@Override
-		public void run() {
+		public void run() { //TCPSocketInterpreter
 			// TODO Auto-generated method stub
 			try {	
 				while(!tcpSocket.isClosed()){
 					Socket client = tcpSocket.accept();
-					socketHandler sH = new socketHandler(client);
+					TCPsocketInterpreter sH = new TCPsocketInterpreter(client);
 					pool.execute(sH);	
 				}
 			} catch (IOException e) {

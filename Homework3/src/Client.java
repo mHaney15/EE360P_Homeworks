@@ -32,106 +32,74 @@ public class Client {
 	    BufferedWriter tcpOut;
 	    DatagramPacket packetIn, packetOut;
 	    byte[] buf = new byte[udpBufSize];
-    
     	host = InetAddress.getByName(hostAddress);
-    	InetSocketAddress serverAddrss = new InetSocketAddress(host, tcpPort);
 	    Scanner sc = new Scanner(System.in);
 	    while(sc.hasNextLine()) {
 	      String cmd = sc.nextLine();
 	      String[] tokens = cmd.split(" ");
-	      String username, product, protocol;
+	      String username, product, protocol, message, response;
+	      message = response = username = product = protocol = null;
 	      int quantity, orderID;
-	      	
-	      clientSocket = new Socket();
-	      udpSocket = new DatagramSocket(udpPort, host);
-	      tcpIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-	      tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-	     
-	        if (tokens[0].equals("purchase")) {
+	      quantity = orderID = -1;
+	      
+	      if (tokens[0].equals("purchase")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  username = tokens[1];
 	    	  product = tokens[2];
 	    	  quantity = Integer.parseInt(tokens[3]);
 	    	  protocol = tokens[4];
-	    	  String message = protocol + " " + username + " " + product + " " + quantity;
-	    	  String response = "";
-	    	  if(protocol.toUpperCase().equals("T")){
-				clientSocket.connect(serverAddrss);
-	    		tcpOut.write(message);
-				response = tcpIn.readLine();
-	    	  }else{
-	    		  byte[] data = message.getBytes();
-	    		  packetOut = new DatagramPacket(data, data.length);
-	    		  udpSocket.send(packetOut);
-	    		  packetIn = new DatagramPacket(buf, buf.length);
-	    		  udpSocket.receive(packetIn);
-	    		  response = packetIn.getData().toString();
-	    	  }
-	    	  System.out.println(response);
+	    	  message = tokens[0] + username + " " + product + " " + quantity;
+	    	  
 	      } else if (tokens[0].equals("cancel")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  orderID = Integer.parseInt(tokens[1]);
 	    	  protocol = tokens[2];
-	    	  String message = protocol+" "+orderID;
-	    	  String response;
-	    	  if(protocol.toUpperCase().equals("T")){
-	    		  tcpOut.write(message);
-	    		  response = tcpIn.readLine();
-	    	  }
-	    	  else{
-	    		  byte[] data = message.getBytes();
-	    		  packetOut = new DatagramPacket(data, data.length);
-	    		  udpSocket.send(packetOut);
-	    		  packetIn = new DatagramPacket(buf, buf.length);
-	    		  udpSocket.receive(packetIn);
-	    		  response = packetIn.getData().toString();
-	    	  }
-	    	  System.out.println(response);
+	    	  message = tokens[0] + Integer.toString(orderID);
+	      
 	      } else if (tokens[0].equals("search")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  username = tokens[1];
 	    	  protocol = tokens[2];
-	    	  String message = protocol + " " + username;
-	    	  String response;
-	    	  if(protocol.toUpperCase().equals("T")){
-				tcpOut.write(message);
-	    		response = tcpIn.readLine();
-	    	  }else{
-	    		  byte[] data = message.getBytes();
-	    		  packetOut = new DatagramPacket(data, data.length);
-	    		  udpSocket.send(packetOut);
-	    		  packetIn = new DatagramPacket(buf, buf.length);
-	    		  udpSocket.receive(packetIn);
-	    		  response = packetIn.getData().toString();
-	    	  }
-	    	  System.out.println(response);
+	    	  message = tokens[1] + username;
+	      
 	      } else if (tokens[0].equals("list")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  protocol = tokens[1];
-	    	  String response;
+	    	  message = tokens[0];
+	      
+	      } else {
+	        System.out.println("ERROR: No such command");
+	      }
+	      
+	      if(message != null){
 	    	  if(protocol.toUpperCase().equals("T")){
-				tcpOut.write(protocol);
-	    		response = tcpIn.readLine();
+	    		  clientSocket = new Socket(host, tcpPort);
+	    		  tcpIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+	    	      tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+	    	      tcpOut.write(message+"\n");
+	    	      tcpOut.flush();
+	    	      response = tcpIn.readLine();
+	    	      clientSocket.close();
 	    	  }else{
-	    		  byte[] data = protocol.getBytes();
-	    		  packetOut = new DatagramPacket(data, data.length);
+	    		  byte[] data = message.getBytes();
+	    		  packetOut = new DatagramPacket(data, data.length, host, udpPort);
+	    		  udpSocket = new DatagramSocket();
 	    		  udpSocket.send(packetOut);
 	    		  packetIn = new DatagramPacket(buf, buf.length);
 	    		  udpSocket.receive(packetIn);
 	    		  response = packetIn.getData().toString();
+	    		  udpSocket.close();
 	    	  }
 	    	  System.out.println(response);
-	      } else {
-	        System.out.println("ERROR: No such command");
 	      }
+	      
+	      
+	      
 	    }
-	    
-	    clientSocket.close();
-	    udpSocket.close();
 	    sc.close();
     } catch (IOException e) {
 		// TODO Auto-generated catch block
