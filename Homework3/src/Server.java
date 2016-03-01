@@ -1,23 +1,12 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.file.Files;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.io.*;
+import java.net.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
+import java.nio.file.Files;
 
 public class Server {
-	
+	static final int udpBufSize = 1024;
 	static Hashtable<String, Integer> inventory;
 	static List<Order> orderHistory; 
 	static Executor pool = Executors.newWorkStealingPool();
@@ -56,7 +45,9 @@ public class Server {
 			
 		// handle request from clients
 		TCPSocketHandler tcpSH = server.new TCPSocketHandler();
+		UDPSocketHandler udpSH = server.new UDPSocketHandler();
 		pool.execute(tcpSH);
+		pool.execute(udpSH);
 		while(true){}
     
     } catch (IOException e) {
@@ -106,10 +97,10 @@ public class Server {
 				try {
 					BufferedReader socketIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 					BufferedWriter socketOut = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-					String message = socketIn.readLine();
-					//Do something with message....
-					socketOut.write(message+"\n");
+					String messageOut = parseMessage(socketIn.readLine());
+					socketOut.write(messageOut+"\n");
 					socketOut.flush();
+					socket.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -133,6 +124,51 @@ public class Server {
 		}
 	}
 
+	public class UDPSocketHandler implements Runnable{
+		private class UDPDatagramInterpreter implements Runnable{
+			DatagramPacket dataRecd;
+			DatagramPacket dataSend;
+			
+			UDPDatagramInterpreter(DatagramPacket recd){
+				this.dataRecd = recd;
+			}
+			@Override
+			public void run() {
+				String messageOut = parseMessage(dataRecd.getData().toString());
+				byte[] messageAsBytes = messageOut.getBytes();
+				this.dataSend = new DatagramPacket(messageAsBytes, messageAsBytes.length, dataRecd.getAddress(), dataRecd.getPort());
+				try {
+					udpSocket.send(dataSend);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			while(!udpSocket.isClosed()){
+				byte[] buf = new byte[udpBufSize];
+				DatagramPacket recd = new DatagramPacket(buf, buf.length);
+				try {
+					udpSocket.receive(recd);
+					UDPDatagramInterpreter udpDI = new UDPDatagramInterpreter(recd);
+					pool.execute(udpDI);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
+
+	// TODO: Implement this.
+	String parseMessage(String msg){
+		return msg;
+	}
 }
 
 
