@@ -57,9 +57,7 @@ public class Client {
     	  product = tokens[2];
     	  quantity = Integer.parseInt(tokens[3]);
     	  protocol = tokens[4];
-    	quantity = Integer.parseInt(tokens[3]);
-    	protocol = tokens[4];
-    	
+
       } else if (tokens[0].equals("cancel")) {
         // TODO: send appropriate command to the server and display the
         // appropriate responses form the server
