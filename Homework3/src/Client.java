@@ -53,14 +53,14 @@ public class Client {
 	    	  product = tokens[2];
 	    	  quantity = Integer.parseInt(tokens[3]);
 	    	  protocol = tokens[4];
-    	  
-    	  String message = protocol + " " + username + " " + product + " " + quantity;
-    	  if(protocol.toUpperCase().equals("T")){
-			tcpOut.write(message);
-    	  }else{
-    		  byte[] data = message.getBytes();
-    	  }
-	
+	    	  String message = protocol + " " + username + " " + product + " " + quantity;
+	    	  if(protocol.toUpperCase().equals("T")){
+				tcpOut.write(message);
+	    	  }else{
+	    		  byte[] data = message.getBytes();
+	    		  packetOut = new DatagramPacket(data, data.length);
+	    		  udpSocket.send(packetOut);
+	    	  }
 	      } else if (tokens[0].equals("cancel")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
@@ -80,10 +80,26 @@ public class Client {
 	        // appropriate responses form the server
 	    	  username = tokens[1];
 	    	  protocol = tokens[2];
+	    	  String message = protocol + " " + username;
+	    	  if(protocol.toUpperCase().equals("T")){
+				tcpOut.write(message);
+	    	  }else{
+	    		  byte[] data = message.getBytes();
+	    		  packetOut = new DatagramPacket(data, data.length);
+	    		  udpSocket.send(packetOut);
+	    	  }
+	    	  
 	      } else if (tokens[0].equals("list")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  protocol = tokens[1];
+	    	  if(protocol.toUpperCase().equals("T")){
+				tcpOut.write(protocol);
+	    	  }else{
+	    		  byte[] data = protocol.getBytes();
+	    		  packetOut = new DatagramPacket(data, data.length);
+	    		  udpSocket.send(packetOut);
+	    	  }
 	      } else {
 	        System.out.println("ERROR: No such command");
 	      }
