@@ -134,7 +134,7 @@ public class Server {
 			}
 			@Override
 			public void run() {
-				String messageOut = parseMessage(dataRecd.getData().toString());
+				String messageOut = parseMessage(new String(dataRecd.getData()).trim());
 				byte[] messageAsBytes = messageOut.getBytes();
 				this.dataSend = new DatagramPacket(messageAsBytes, messageAsBytes.length, dataRecd.getAddress(), dataRecd.getPort());
 				try {
