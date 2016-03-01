@@ -7,10 +7,10 @@ import java.nio.file.Files;
 
 public class Server {
 	static final int udpBufSize = 1024;
-	static Hashtable<String, Integer> inventory;
-	static List<Order> orderHistory; 
+	static Hashtable<String, Integer> inventory; //Thread-safe.
+	static Vector<Order> orderHistory; //Thread-safe.
 	static Executor pool = Executors.newWorkStealingPool();
-	static AtomicInteger currentOrderID = new AtomicInteger(1);
+	static AtomicInteger currentOrderID = new AtomicInteger(1); //Thread-safe.
 	static ServerSocket tcpSocket;
     static DatagramSocket udpSocket;
 	public static void main (String[] args) {
@@ -97,7 +97,7 @@ public class Server {
 				try {
 					BufferedReader socketIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 					BufferedWriter socketOut = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-					String messageOut = parseMessage(socketIn.readLine());
+					String messageOut = parseAndExecute(socketIn.readLine());
 					socketOut.write(messageOut+"\n");
 					socketOut.flush();
 					socket.close();
@@ -134,7 +134,7 @@ public class Server {
 			}
 			@Override
 			public void run() {
-				String messageOut = parseMessage(new String(dataRecd.getData()).trim());
+				String messageOut = parseAndExecute(new String(dataRecd.getData()).trim());
 				byte[] messageAsBytes = messageOut.getBytes();
 				this.dataSend = new DatagramPacket(messageAsBytes, messageAsBytes.length, dataRecd.getAddress(), dataRecd.getPort());
 				try {
@@ -166,8 +166,24 @@ public class Server {
 	}
 
 	// TODO: Implement this.
-	String parseMessage(String msg){
-		return msg;
+	// takes in a string message, and parses it to get the command.
+	// executes the intended command and returns a response.
+	String parseAndExecute(String msg){
+		String[] tokens = msg.split(" ");
+		String response = "";
+		switch(tokens[0]){
+		case "purchase":
+		break;
+		case "cancel":
+		break;
+		case "search":
+		break;
+		case "list":
+		break;
+		default:
+			response = "Error: "+tokens[0]+" is not a valid command.";
+		}
+		return response;
 	}
 }
 
