@@ -91,7 +91,7 @@ public class Client {
 	    		  udpSocket.send(packetOut);
 	    		  packetIn = new DatagramPacket(buf, buf.length);
 	    		  udpSocket.receive(packetIn);
-	    		  response = packetIn.getData().toString();
+	    		  response = new String(packetIn.getData()).trim();
 	    		  udpSocket.close();
 	    	  }
 	    	  System.out.println(response);
