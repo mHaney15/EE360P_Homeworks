@@ -54,13 +54,19 @@ public class Client {
 	    	  quantity = Integer.parseInt(tokens[3]);
 	    	  protocol = tokens[4];
 	    	  String message = protocol + " " + username + " " + product + " " + quantity;
+	    	  String response = "";
 	    	  if(protocol.toUpperCase().equals("T")){
 				tcpOut.write(message);
+				response = tcpIn.readLine();
 	    	  }else{
 	    		  byte[] data = message.getBytes();
 	    		  packetOut = new DatagramPacket(data, data.length);
 	    		  udpSocket.send(packetOut);
+	    		  packetIn = new DatagramPacket(buf, buf.length);
+	    		  udpSocket.receive(packetIn);
+	    		  response = packetIn.getData().toString();
 	    	  }
+	    	  System.out.println(response);
 	      } else if (tokens[0].equals("cancel")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
@@ -83,12 +89,12 @@ public class Client {
 	    	  String message = protocol + " " + username;
 	    	  if(protocol.toUpperCase().equals("T")){
 				tcpOut.write(message);
+				
 	    	  }else{
 	    		  byte[] data = message.getBytes();
 	    		  packetOut = new DatagramPacket(data, data.length);
 	    		  udpSocket.send(packetOut);
 	    	  }
-	    	  
 	      } else if (tokens[0].equals("list")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
