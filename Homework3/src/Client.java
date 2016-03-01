@@ -34,19 +34,20 @@ public class Client {
 	    byte[] buf = new byte[udpBufSize];
     
     	host = InetAddress.getByName(hostAddress);
-        clientSocket = new Socket(host, tcpPort);
-        udpSocket = new DatagramSocket(udpPort, host);
-        tcpIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-	
+    	InetSocketAddress serverAddrss = new InetSocketAddress(host, tcpPort);
 	    Scanner sc = new Scanner(System.in);
 	    while(sc.hasNextLine()) {
 	      String cmd = sc.nextLine();
 	      String[] tokens = cmd.split(" ");
 	      String username, product, protocol;
 	      int quantity, orderID;
-	      
-	      if (tokens[0].equals("purchase")) {
+	      	
+	      clientSocket = new Socket();
+	      udpSocket = new DatagramSocket(udpPort, host);
+	      tcpIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+	      tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+	     
+	        if (tokens[0].equals("purchase")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  username = tokens[1];
@@ -56,7 +57,8 @@ public class Client {
 	    	  String message = protocol + " " + username + " " + product + " " + quantity;
 	    	  String response = "";
 	    	  if(protocol.toUpperCase().equals("T")){
-				tcpOut.write(message);
+				clientSocket.connect(serverAddrss);
+	    		tcpOut.write(message);
 				response = tcpIn.readLine();
 	    	  }else{
 	    		  byte[] data = message.getBytes();
@@ -130,11 +132,10 @@ public class Client {
 	    
 	    clientSocket.close();
 	    udpSocket.close();
+	    sc.close();
     } catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
-	}
-    
-    
-    }
+	}   
+  }
 }

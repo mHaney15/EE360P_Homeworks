@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -42,14 +43,15 @@ public class Server {
     	Server server = new Server();
     	localHost = InetAddress.getLocalHost();
 		tcpSocket = new ServerSocket(tcpPort, 0, localHost);
-		udpSocket = new DatagramSocket(udpPort, localHost);
+		udpSocket = new DatagramSocket(udpPort);
 	    
 		// parse the inventory file
 		inventory = new Hashtable<String, Integer>();
 		List<String> InventoryLines = Files.readAllLines(new File(fileName).toPath());
 		for(String line : InventoryLines){
 			String[] elements = line.split(" ");
-			inventory.put(elements[0], new Integer(elements[1]));
+			if(elements.length == 2)
+				inventory.put(elements[0], new Integer(elements[1]));
 		}
 			
 		// handle request from clients
