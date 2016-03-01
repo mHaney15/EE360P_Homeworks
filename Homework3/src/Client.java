@@ -2,6 +2,8 @@ import java.util.*;
 import java.net.*;
 import java.io.*;
 
+
+
 public class Client {
   public static void main (String[] args) {
     String hostAddress;
@@ -45,26 +47,33 @@ public class Client {
     while(sc.hasNextLine()) {
       String cmd = sc.nextLine();
       String[] tokens = cmd.split(" ");
-
+      String username, product, protocol;
+      int quantity, orderID;
+      
       if (tokens[0].equals("purchase")) {
         // TODO: send appropriate command to the server and display the
         // appropriate responses form the server
-    	String username, productName, protocol;
-    	int quantity;
-    	username = tokens[1];
-    	productName = tokens[2];
+    	  username = tokens[1];
+    	  product = tokens[2];
+    	  quantity = Integer.parseInt(tokens[3]);
+    	  protocol = tokens[4];
     	quantity = Integer.parseInt(tokens[3]);
     	protocol = tokens[4];
     	
       } else if (tokens[0].equals("cancel")) {
         // TODO: send appropriate command to the server and display the
         // appropriate responses form the server
+    	  orderID = Integer.parseInt(tokens[1]);
+    	  protocol = tokens[2];
       } else if (tokens[0].equals("search")) {
         // TODO: send appropriate command to the server and display the
         // appropriate responses form the server
+    	  username = tokens[1];
+    	  protocol = tokens[2];
       } else if (tokens[0].equals("list")) {
         // TODO: send appropriate command to the server and display the
         // appropriate responses form the server
+    	  protocol = tokens[1];
       } else {
         System.out.println("ERROR: No such command");
       }
