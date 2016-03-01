@@ -41,7 +41,7 @@ public class Server {
     String fileName = args[2];
     try {
     	Server server = new Server();
-    	localHost = InetAddress.getLocalHost();
+    	localHost = InetAddress.getByName("127.0.0.1");
 		tcpSocket = new ServerSocket(tcpPort, 0, localHost);
 		udpSocket = new DatagramSocket(udpPort);
 	    
