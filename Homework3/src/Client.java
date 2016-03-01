@@ -49,21 +49,21 @@ public class Client {
 	    	  product = tokens[2];
 	    	  quantity = Integer.parseInt(tokens[3]);
 	    	  protocol = tokens[4];
-	    	  message = tokens[0] + username + " " + product + " " + quantity;
+	    	  message = tokens[0] + " " + username + " " + product + " " + quantity;
 	    	  
 	      } else if (tokens[0].equals("cancel")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  orderID = Integer.parseInt(tokens[1]);
 	    	  protocol = tokens[2];
-	    	  message = tokens[0] + Integer.toString(orderID);
+	    	  message = tokens[0] + " " + Integer.toString(orderID);
 	      
 	      } else if (tokens[0].equals("search")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  username = tokens[1];
 	    	  protocol = tokens[2];
-	    	  message = tokens[1] + username;
+	    	  message = tokens[0] + " " + username;
 	      
 	      } else if (tokens[0].equals("list")) {
 	        // TODO: send appropriate command to the server and display the
