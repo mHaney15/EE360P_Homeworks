@@ -56,12 +56,7 @@ public class Client {
     	  
     	  String message = protocol + " " + username + " " + product + " " + quantity;
     	  if(protocol.toUpperCase().equals("T")){
-    		  try {
-				tcpOut.write(message);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			tcpOut.write(message);
     	  }else{
     		  byte[] data = message.getBytes();
     	  }
