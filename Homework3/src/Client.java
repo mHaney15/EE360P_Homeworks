@@ -23,58 +23,72 @@ public class Client {
     tcpPort = Integer.parseInt(args[1]);
     udpPort = Integer.parseInt(args[2]);
 
-    InetAddress host;
-    Socket clientSocket;
-    DatagramSocket udpSocket;
-    
-    BufferedReader tcpIn;
-    BufferedWriter tcpOut;
-    DatagramPacket packetIn, packetOut;
-    byte[] buf = new byte[udpBufSize];
     try {
+    	
+    	InetAddress host;
+        Socket clientSocket;
+        DatagramSocket udpSocket;
+        BufferedReader tcpIn;
+	    BufferedWriter tcpOut;
+	    DatagramPacket packetIn, packetOut;
+	    byte[] buf = new byte[udpBufSize];
+    
     	host = InetAddress.getByName(hostAddress);
         clientSocket = new Socket(host, tcpPort);
         udpSocket = new DatagramSocket(udpPort, host);
         tcpIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-	} catch (IOException e) {
+	
+	    Scanner sc = new Scanner(System.in);
+	    while(sc.hasNextLine()) {
+	      String cmd = sc.nextLine();
+	      String[] tokens = cmd.split(" ");
+	      String username, product, protocol;
+	      int quantity, orderID;
+	      
+	      if (tokens[0].equals("purchase")) {
+	        // TODO: send appropriate command to the server and display the
+	        // appropriate responses form the server
+	    	  username = tokens[1];
+	    	  product = tokens[2];
+	    	  quantity = Integer.parseInt(tokens[3]);
+	    	  protocol = tokens[4];
+	
+	      } else if (tokens[0].equals("cancel")) {
+	        // TODO: send appropriate command to the server and display the
+	        // appropriate responses form the server
+	    	  orderID = Integer.parseInt(tokens[1]);
+	    	  protocol = tokens[2];
+	    	  String message = protocol+" "+orderID;
+	    	  if(protocol.toUpperCase().equals("T")){
+	    		  tcpOut.write(message);
+	    	  }
+	    	  else{
+	    		  byte[] data = message.getBytes();
+	    		  packetOut = new DatagramPacket(data, data.length);
+	    		  udpSocket.send(packetOut);
+	    	  }
+	      } else if (tokens[0].equals("search")) {
+	        // TODO: send appropriate command to the server and display the
+	        // appropriate responses form the server
+	    	  username = tokens[1];
+	    	  protocol = tokens[2];
+	      } else if (tokens[0].equals("list")) {
+	        // TODO: send appropriate command to the server and display the
+	        // appropriate responses form the server
+	    	  protocol = tokens[1];
+	      } else {
+	        System.out.println("ERROR: No such command");
+	      }
+	    }
+	    
+	    clientSocket.close();
+	    udpSocket.close();
+    } catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
     
     
-    Scanner sc = new Scanner(System.in);
-    while(sc.hasNextLine()) {
-      String cmd = sc.nextLine();
-      String[] tokens = cmd.split(" ");
-      String username, product, protocol;
-      int quantity, orderID;
-      
-      if (tokens[0].equals("purchase")) {
-        // TODO: send appropriate command to the server and display the
-        // appropriate responses form the server
-    	  username = tokens[1];
-    	  product = tokens[2];
-    	  quantity = Integer.parseInt(tokens[3]);
-    	  protocol = tokens[4];
-
-      } else if (tokens[0].equals("cancel")) {
-        // TODO: send appropriate command to the server and display the
-        // appropriate responses form the server
-    	  orderID = Integer.parseInt(tokens[1]);
-    	  protocol = tokens[2];
-      } else if (tokens[0].equals("search")) {
-        // TODO: send appropriate command to the server and display the
-        // appropriate responses form the server
-    	  username = tokens[1];
-    	  protocol = tokens[2];
-      } else if (tokens[0].equals("list")) {
-        // TODO: send appropriate command to the server and display the
-        // appropriate responses form the server
-    	  protocol = tokens[1];
-      } else {
-        System.out.println("ERROR: No such command");
-      }
     }
-  }
 }
