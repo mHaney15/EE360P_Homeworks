@@ -1,3 +1,9 @@
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.ServerSocket;
+import java.net.InetAddress;
+
 public class Server {
   public static void main (String[] args) {
     int tcpPort;
@@ -10,9 +16,20 @@ public class Server {
 
       System.exit(-1);
     }
+    InetAddress localHost;
     tcpPort = Integer.parseInt(args[0]);
     udpPort = Integer.parseInt(args[1]);
     String fileName = args[2];
+    ServerSocket tcpSocket;
+    DatagramSocket udpSocket;
+    try {
+    	localHost = InetAddress.getLocalHost();
+		tcpSocket = new ServerSocket(tcpPort, 0, localHost);
+		udpSocket = new DatagramSocket(udpPort, localHost);
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
 
     // parse the inventory file
 
