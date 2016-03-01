@@ -28,7 +28,7 @@ public class Client {
     DatagramSocket udpSocket;
     
     BufferedReader tcpIn;
-    BufferedWriter tcpOut;
+    BufferedWriter tcpOut = null;
     DatagramPacket packetIn, packetOut;
     byte[] buf = new byte[udpBufSize];
     try {
@@ -57,6 +57,18 @@ public class Client {
     	  product = tokens[2];
     	  quantity = Integer.parseInt(tokens[3]);
     	  protocol = tokens[4];
+    	  
+    	  String message = protocol + " " + username + " " + product + " " + quantity;
+    	  if(protocol.toUpperCase().equals("T")){
+    		  try {
+				tcpOut.write(message);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	  }else{
+    		  byte[] data = message.getBytes();
+    	  }
 
       } else if (tokens[0].equals("cancel")) {
         // TODO: send appropriate command to the server and display the
