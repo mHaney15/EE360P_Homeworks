@@ -73,39 +73,56 @@ public class Client {
 	    	  orderID = Integer.parseInt(tokens[1]);
 	    	  protocol = tokens[2];
 	    	  String message = protocol+" "+orderID;
+	    	  String response;
 	    	  if(protocol.toUpperCase().equals("T")){
 	    		  tcpOut.write(message);
+	    		  response = tcpIn.readLine();
 	    	  }
 	    	  else{
 	    		  byte[] data = message.getBytes();
 	    		  packetOut = new DatagramPacket(data, data.length);
 	    		  udpSocket.send(packetOut);
+	    		  packetIn = new DatagramPacket(buf, buf.length);
+	    		  udpSocket.receive(packetIn);
+	    		  response = packetIn.getData().toString();
 	    	  }
+	    	  System.out.println(response);
 	      } else if (tokens[0].equals("search")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  username = tokens[1];
 	    	  protocol = tokens[2];
 	    	  String message = protocol + " " + username;
+	    	  String response;
 	    	  if(protocol.toUpperCase().equals("T")){
 				tcpOut.write(message);
-				
+	    		response = tcpIn.readLine();
 	    	  }else{
 	    		  byte[] data = message.getBytes();
 	    		  packetOut = new DatagramPacket(data, data.length);
 	    		  udpSocket.send(packetOut);
+	    		  packetIn = new DatagramPacket(buf, buf.length);
+	    		  udpSocket.receive(packetIn);
+	    		  response = packetIn.getData().toString();
 	    	  }
+	    	  System.out.println(response);
 	      } else if (tokens[0].equals("list")) {
 	        // TODO: send appropriate command to the server and display the
 	        // appropriate responses form the server
 	    	  protocol = tokens[1];
+	    	  String response;
 	    	  if(protocol.toUpperCase().equals("T")){
 				tcpOut.write(protocol);
+	    		response = tcpIn.readLine();
 	    	  }else{
 	    		  byte[] data = protocol.getBytes();
 	    		  packetOut = new DatagramPacket(data, data.length);
 	    		  udpSocket.send(packetOut);
+	    		  packetIn = new DatagramPacket(buf, buf.length);
+	    		  udpSocket.receive(packetIn);
+	    		  response = packetIn.getData().toString();
 	    	  }
+	    	  System.out.println(response);
 	      } else {
 	        System.out.println("ERROR: No such command");
 	      }
