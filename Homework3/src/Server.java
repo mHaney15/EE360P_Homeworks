@@ -87,6 +87,10 @@ public class Server {
 			String OString = orderID+", "+productName+", "+quantity;
 			return OString;
 		}
+	
+		public String toString(){
+			return orderID+" "+username+" "+" "+productName+" "+quantity;
+		}
 		
 		Order copy(){
 			return new Order(this.orderID, this.username, this.productName, this.quantity);
@@ -195,25 +199,31 @@ public class Server {
 				response = "Not Available - Not Enough Items";
 			}else{
 				inventory.replace(tokens[2], inventory.get(tokens[2])-Integer.parseInt(tokens[3]));
-				Order order = new Order(currentOrderID.get(),tokens[1],tokens[2],Integer.parseInt(tokens[3]));
+				Order order = new Order(currentOrderID.getAndIncrement(),tokens[1],tokens[2],Integer.parseInt(tokens[3]));
 				orderHistory.addElement(order);
-				response = "Your order has been placed, " +currentOrderID.getAndIncrement()+ " " + tokens[1] + " " + tokens[2] + " " + tokens[3];
+				response = "Your order has been placed, "+order.toString();
 			}
 			
 		break;
 		case "cancel":
+			Order toCancel = null;
 			for(Order order: orderHistory){
 				if(order.getOrderID()==Integer.parseInt(tokens[1])){
-					for(String key : inventory.keySet()){
-						if(key.equals(order.getProductName())){
-							inventory.replace(key, inventory.get(key)+order.getQuantity());
-						}
-					}	
-					orderHistory.remove(order);
-					response = "Order " + tokens[1] +" is canceled";
-				}else{
-					response = tokens[1] + " not found, no such order";
+					toCancel = order;
+					break;
 				}
+			}
+			if(toCancel != null){
+				orderHistory.remove(toCancel);
+				for(String key : inventory.keySet()){
+					if(key.equals(toCancel.getProductName())){
+					inventory.replace(key, inventory.get(key)+toCancel.getQuantity());
+					}
+				}	
+				response = "Order " + tokens[1] +" is canceled";
+			}
+			else{
+				response = tokens[1] + " not found, no such order";
 			}
 		break;
 		case "search":
