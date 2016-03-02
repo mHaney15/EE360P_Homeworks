@@ -13,7 +13,6 @@ public class Server {
 	static AtomicInteger currentOrderID = new AtomicInteger(1); //Thread-safe.
 	static ServerSocket tcpSocket;
     static DatagramSocket udpSocket;
-    static int orderCount=1;
 	public static void main (String[] args) {
     int tcpPort;
     int udpPort;
@@ -184,10 +183,9 @@ public class Server {
 	// TODO: Implement this.
 	// takes in a string message, and parses it to get the command.
 	// executes the intended command and returns a response.
-	String parseAndExecute(String msg){
+	synchronized String parseAndExecute(String msg){
 		String[] tokens = msg.split(" ");
 		String response = "";
-		Set<String> keys = inventory.keySet();
 
 		switch(tokens[0]){
 		case "purchase": 
@@ -197,17 +195,16 @@ public class Server {
 				response = "Not Available - Not Enough Items";
 			}else{
 				inventory.replace(tokens[2], inventory.get(tokens[2])-Integer.parseInt(tokens[3]));
-				Order order = new Order(orderCount,tokens[1],tokens[2],Integer.parseInt(tokens[3]));
+				Order order = new Order(currentOrderID.get(),tokens[1],tokens[2],Integer.parseInt(tokens[3]));
 				orderHistory.addElement(order);
-				response = "Your order has been placed, " +orderCount+ " " + tokens[1] + " " + tokens[2] + " " + tokens[3];
-				orderCount++;
+				response = "Your order has been placed, " +currentOrderID.getAndIncrement()+ " " + tokens[1] + " " + tokens[2] + " " + tokens[3];
 			}
 			
 		break;
 		case "cancel":
 			for(Order order: orderHistory){
 				if(order.getOrderID()==Integer.parseInt(tokens[1])){
-					for(String key : keys){
+					for(String key : inventory.keySet()){
 						if(key.equals(order.getProductName())){
 							inventory.replace(key, inventory.get(key)+order.getQuantity());
 						}
@@ -240,7 +237,7 @@ public class Server {
 		break;
 		case "list":
 			String list= "";
-			for(String key : keys){
+			for(String key : inventory.keySet()){
 					list = key + " " + inventory.get(key);
 					response = response+list+"\n";
 			}
