@@ -36,6 +36,7 @@ public class Server {
 	    
 		// parse the inventory file
 		inventory = new Hashtable<String, Integer>();
+		orderHistory = new Vector<Order>();
 		List<String> InventoryLines = Files.readAllLines(new File(fileName).toPath());
 		for(String line : InventoryLines){
 			String[] elements = line.split(" ");
@@ -55,7 +56,7 @@ public class Server {
 		e.printStackTrace();
 	}
   }
-	public class  Order {
+	public class  Order implements Comparable<Order>{
 		int orderID;
 		String username;
 		String productName;
@@ -81,6 +82,20 @@ public class Server {
 
 		public int getQuantity() {
 			return quantity;
+		}
+		public String toStringNoName(){
+			String OString = orderID+", "+productName+", "+quantity;
+			return OString;
+		}
+		
+		Order copy(){
+			return new Order(this.orderID, this.username, this.productName, this.quantity);
+		}
+
+		@Override
+		public int compareTo(Order o) {
+			// TODO Auto-generated method stub
+			return this.orderID - o.getOrderID();
 		}
 	}
 	
@@ -190,13 +205,31 @@ public class Server {
 		case "cancel":
 		break;
 		case "search":
+			String userName = tokens[1];
+			List<Order> orders = new ArrayList<Order>();
+			for(Order o : orderHistory){
+				if(userName.equals(o.getUsername())){
+					orders.add(o.copy());
+				}
+			}
+			if(orders.isEmpty()){
+				response = "No order found for "+userName;
+			}
+			else{
+				Collections.sort(orders);
+				for(Order o : orders){
+					response = response + o.toStringNoName()+"\n";
+				}
+				response = response.substring(0, response.length()-1);
+			}
 		break;
 		case "list":
 			String list= "";
 			for(String key : keys){
-				list = key + " " + inventory.get(key) +"\n";
-				response = response + list;
-			}			
+					list = key + " " + inventory.get(key);
+					response = response+list+"\n";
+			}
+			response = response.substring(0, response.length()-1);
 		break;
 		default:
 			response = "Error: "+tokens[0]+" is not a valid command.";
@@ -204,6 +237,5 @@ public class Server {
 		return response;
 	}
 }
-
 
 
