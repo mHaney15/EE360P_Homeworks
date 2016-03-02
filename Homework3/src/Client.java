@@ -37,8 +37,10 @@ public class Client {
 	    while(sc.hasNextLine()) {
 	      String cmd = sc.nextLine();
 	      String[] tokens = cmd.split(" ");
-	      String username, product, protocol, message, response;
-	      message = response = username = product = protocol = null;
+	      String username, product, protocol, message, response,buffer;
+	      message = username = product = protocol = null;
+	      response = "";
+	      buffer = "";
 	      int quantity, orderID;
 	      quantity = orderID = -1;
 	      
@@ -82,7 +84,11 @@ public class Client {
 	    	      tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 	    	      tcpOut.write(message+"\n");
 	    	      tcpOut.flush();
-	    	      response = tcpIn.readLine();
+	    	      buffer = tcpIn.readLine();
+	    	      while(buffer != null){
+	    	    	  response = response + buffer + "\n";
+	    	    	  buffer = tcpIn.readLine();
+	    	      }
 	    	      clientSocket.close();
 	    	  }else{
 	    		  byte[] data = message.getBytes();

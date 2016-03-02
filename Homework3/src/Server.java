@@ -171,14 +171,32 @@ public class Server {
 	String parseAndExecute(String msg){
 		String[] tokens = msg.split(" ");
 		String response = "";
+		Set<String> keys = inventory.keySet();
+		int x=1;
 		switch(tokens[0]){
-		case "purchase":
+		case "purchase": 
+			if(!inventory.containsKey(tokens[2]))
+				response = "Not Available - We do not sell this product";
+			else if(inventory.get(tokens[2]) < Integer.parseInt(tokens[3])){
+				response = "Not Available - Not Enough Items";
+			}else{
+				Order order = new Order(x,tokens[1],tokens[2],Integer.parseInt(tokens[3]));
+				x++;
+				//response = "Your order has been placed, " +x+ " " + tokens[1] + " " + tokens[2] + " " + tokens[3];
+				response = order.getUsername();
+			}
+			
 		break;
 		case "cancel":
 		break;
 		case "search":
 		break;
 		case "list":
+			String list= "";
+			for(String key : keys){
+				list = key + " " + inventory.get(key) +"\n";
+				response = response + list;
+			}			
 		break;
 		default:
 			response = "Error: "+tokens[0]+" is not a valid command.";
