@@ -86,9 +86,10 @@ public class Client {
 	    	      tcpOut.flush();
 	    	      buffer = tcpIn.readLine();
 	    	      while(buffer != null){
-	    	    	  response = response + buffer + "\n";
+	    	    	  response = response+buffer+"\n";
 	    	    	  buffer = tcpIn.readLine();
 	    	      }
+	    	      response = response.substring(0, response.length() - 1);
 	    	      clientSocket.close();
 	    	  }else{
 	    		  byte[] data = message.getBytes();
