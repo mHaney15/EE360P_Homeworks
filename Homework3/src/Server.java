@@ -13,6 +13,7 @@ public class Server {
 	static AtomicInteger currentOrderID = new AtomicInteger(1); //Thread-safe.
 	static ServerSocket tcpSocket;
     static DatagramSocket udpSocket;
+    static int orderCount=1;
 	public static void main (String[] args) {
     int tcpPort;
     int udpPort;
@@ -172,7 +173,7 @@ public class Server {
 		String[] tokens = msg.split(" ");
 		String response = "";
 		Set<String> keys = inventory.keySet();
-		int x=1;
+
 		switch(tokens[0]){
 		case "purchase": 
 			if(!inventory.containsKey(tokens[2]))
@@ -180,14 +181,28 @@ public class Server {
 			else if(inventory.get(tokens[2]) < Integer.parseInt(tokens[3])){
 				response = "Not Available - Not Enough Items";
 			}else{
-				Order order = new Order(x,tokens[1],tokens[2],Integer.parseInt(tokens[3]));
-				x++;
-				//response = "Your order has been placed, " +x+ " " + tokens[1] + " " + tokens[2] + " " + tokens[3];
-				response = order.getUsername();
+				inventory.replace(tokens[2], inventory.get(tokens[2])-Integer.parseInt(tokens[3]));
+				Order order = new Order(orderCount,tokens[1],tokens[2],Integer.parseInt(tokens[3]));
+				orderHistory.addElement(order);
+				response = "Your order has been placed, " +orderCount+ " " + tokens[1] + " " + tokens[2] + " " + tokens[3];
+				orderCount++;
 			}
 			
 		break;
 		case "cancel":
+			for(Order order: orderHistory){
+				if(order.getOrderID()==Integer.parseInt(tokens[1])){
+					for(String key : keys){
+						if(key.equals(order.getProductName())){
+							inventory.replace(key, inventory.get(key)+order.getQuantity());
+						}
+					}	
+					orderHistory.remove(order);
+					response = "Order " + tokens[1] +" is canceled";
+				}else{
+					response = tokens[1] + " not found, no such order";
+				}
+			}
 		break;
 		case "search":
 		break;
