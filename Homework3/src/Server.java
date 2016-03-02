@@ -95,7 +95,7 @@ public class Server {
 		}
 	
 		public String toString(){
-			return orderID+" "+username+" "+" "+productName+" "+quantity;
+			return orderID+" "+username+" "+productName+" "+quantity;
 		}
 		
 		Order copy(){
