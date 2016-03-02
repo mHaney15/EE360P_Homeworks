@@ -1,3 +1,9 @@
+/*
+ * EE360P Homework 3 Question 3: Server Code
+ * Authors: Matthew Haney and Kelvin Pang
+ * UT eids: mah4687 and kkp452
+ */
+
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.*;
