@@ -31,7 +31,6 @@ public class Client {
         BufferedReader tcpIn;
 	    BufferedWriter tcpOut;
 	    DatagramPacket packetIn, packetOut;
-	    byte[] buf = new byte[udpBufSize];
     	host = InetAddress.getByName(hostAddress);
 	    Scanner sc = new Scanner(System.in);
 	    while(sc.hasNextLine()) {
@@ -96,6 +95,7 @@ public class Client {
 	    		  packetOut = new DatagramPacket(data, data.length, host, udpPort);
 	    		  udpSocket = new DatagramSocket();
 	    		  udpSocket.send(packetOut);
+	    		  byte[] buf = new byte[udpBufSize];
 	    		  packetIn = new DatagramPacket(buf, buf.length);
 	    		  udpSocket.receive(packetIn);
 	    		  response = new String(packetIn.getData()).trim();
