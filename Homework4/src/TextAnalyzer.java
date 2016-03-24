@@ -115,7 +115,7 @@ public class TextAnalyzer extends Configured implements Tool {
             }
             //   Empty line for ending the current context key
             context.write(emptyText, emptyText);
-        }
+        } 
     }
 
     public int run(String[] args) throws Exception {
