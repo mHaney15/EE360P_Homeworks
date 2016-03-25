@@ -27,17 +27,17 @@ public class TextAnalyzer extends Configured implements Tool {
         {
             // Implementation of you mapper function
         	String Line = value.toString();
-        	Line.toLowerCase();
-        	Line.replaceAll("[^a-z0-9]", " ");
-        	String[] words = Line.split("[ \t]+");
+        	ArrayList<String> words =  new ArrayList<String>();
+        	words.addAll(Arrays.asList(Line.toLowerCase().replaceAll("[^a-z0-9]", " ").split("[ \t]+")));
+        	while(words.remove("")){}
         	ArrayList<Text> cW_set = new ArrayList<Text>();
         	ArrayList<MapWritable> qWs_set = new ArrayList<MapWritable>();
-        	for(int i = 0; i < words.length; i++){
-        		Text contextWord = new Text(words[i]);
+        	for(int i = 0; i < words.size(); i++){
+        		Text contextWord = new Text(words.get(i));
         		MapWritable queryWords = new MapWritable();
-        		for(int j = 0; j < words.length; j++){
+        		for(int j = 0; j < words.size(); j++){
         			if(i != j){
-        				Text queryWord = new Text(words[j]);
+        				Text queryWord = new Text(words.get(j));
         				if(queryWords.containsKey(queryWord)){
         					queryWords.replace(queryWord, new LongWritable(1 + ((LongWritable)queryWords.get(queryWord)).get()));
         				}
@@ -136,8 +136,8 @@ public class TextAnalyzer extends Configured implements Tool {
         job.setOutputValueClass(Text.class);
         //   If your mapper and combiner's  output types are different from Text.class,
         //   then uncomment the following lines to specify the data types.
-        //job.setMapOutputKeyClass(?.class);
-        //job.setMapOutputValueClass(?.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(MapWritable.class);
 
         // Input
         FileInputFormat.addInputPath(job, new Path(args[0]));
