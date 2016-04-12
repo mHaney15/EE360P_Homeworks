@@ -106,11 +106,12 @@ public class Server {
 		
 	while(!myServer.isClosed()){
 		try {
+			System.out.println("\tAwaiting socket message...");
 			Socket socket = myServer.accept();
 			BufferedReader socketIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			BufferedWriter socketOut = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 			String line = socketIn.readLine();			
-			
+			System.out.println("Recieved: " +line);
 			//"request clk pid"
 			//"ack clk pid"
 			//"release clk pid:clk pid of queued :LINE TO EXECUTE"

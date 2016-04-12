@@ -79,13 +79,14 @@ public class Client {
 	    		  e.printStackTrace();
 	    	  }
 	      }
-	      	  System.out.println("\t Waiting for response...");
 			  tcpIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 		      tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 		      tcpOut.write(message+"\n");
 		      tcpOut.flush();
+	      	  System.out.println("\t Waiting for response...");
 		      buffer = tcpIn.readLine();
 		      while(buffer != null){
+		    	  System.out.println("\t Buffer: "+ buffer);
 		    	  response = response+buffer+"\n";
 		    	  buffer = tcpIn.readLine();
 		      }
