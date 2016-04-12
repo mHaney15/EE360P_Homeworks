@@ -73,11 +73,13 @@ public class Client {
 	      for(int x = 0; x < numServer; x++){
 	    	  try{
 	    		  clientSocket = new Socket(ipAddress[x], portNumber[x]);
+	    		  System.out.println("\t Connected to Socket:" + ipAddress[x] + ":" + portNumber[x]);
 	    		  break;
 	    	  }catch(IOException e){
 	    		  e.printStackTrace();
 	    	  }
 	      }
+	      	  System.out.println("\t Waiting for response...");
 			  tcpIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 		      tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 		      tcpOut.write(message+"\n");
