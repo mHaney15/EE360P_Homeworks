@@ -70,7 +70,7 @@ public static void main (String[] args) {
 	      } else {
 	        System.out.println("ERROR: No such command");
 	      }
-	      for(int x = 0; x < ipAddress.length; x++){
+	      for(int x = 0; x < numServer; x++){
 	    	  try{
 	    		  clientSocket = new Socket(ipAddress[x], portNumber[x]);
 	    		  break;
