@@ -26,38 +26,62 @@ public class Server {
 	
     public static void main (String[] args) {
 	Scanner sc = new Scanner(System.in);
-    myID = sc.nextInt();
+    myID = sc.nextInt() - 1;
     numServers = sc.nextInt();
     inventoryPath = sc.next();
     V = new int[numServers];	//direct dependency clock
     Processes = new Process[numServers]; //Clients to send messages to other Servers.
     ServerSocket myServer = null;
     requestQueue = new Vector<TimeStamp>();
-
+    
+    String[] ipA = new String[numServers];
+    int[] port = new int[numServers];
+    
     for (int i = 0; i < numServers; i++) {
     	// initialize V:
     	V[i] = 0;
+    	Processes[i] = null;
     	String[] line = sc.next().split(":");
-    	try {
-			InetAddress address = InetAddress.getByName(line[0]);
-	    	int port = Integer.parseInt(line[1]);
-	    	if(i == myID){
-	    		myServer = new ServerSocket(port, 0, address);
-	    		Processes[i] = null;
+    	ipA[i] = line[0];
+    	port[i] = Integer.parseInt(line[1]);
+    }
+
+    InetAddress address;
+	try {
+		address = InetAddress.getByName(ipA[myID]);
+		myServer = new ServerSocket(port[myID], 0, address);
+		Processes[myID] = null;
+		System.out.println("\tServer Socket "+(myID+1)+" created Successfully!");
+	} catch (UnknownHostException e1) {
+		e1.printStackTrace();
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+	System.out.println("\tAttempting to connect to other servers...");
+    boolean serversConnected = false;
+    while(!serversConnected){
+    	int numConnected = 0;
+	    for (int i = 0; i < numServers; i++) {
+	    	if((Processes[i] == null) && (i != myID)){
+		    	try {
+					address = InetAddress.getByName(ipA[i]);			    		
+			    	Socket server_i = new Socket(address, port[i]);
+			    	Processes[i] = server.new Process(server_i);
+			    	System.out.println("\tSocket to Server "+(i+1)+" created Successfully!");			    	
+		    	} catch (UnknownHostException e) {
+				} catch (IOException e) {
+				}
 	    	}
-	    	else{
-	    		Socket server_i = new Socket(address, port);
-	    		Processes[i] = server.new Process(server_i);
-	    	}
-    	} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-			Processes[i] = null;
-		}
+	    	else {numConnected++;}
+	    }
+	    if(numConnected == numServers)
+	    	serversConnected = true;
+	    else serversConnected = false;
     }
     
+    
     //parse the inventory file
+    System.out.println("\tAttempting to parse inventory file...");
     inventory = new Hashtable<String, Integer>();
 	orderHistory = new Vector<Order>();
 	try {

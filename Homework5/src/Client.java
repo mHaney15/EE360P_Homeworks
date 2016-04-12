@@ -9,13 +9,12 @@ import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Client {
-  @SuppressWarnings("null")
-public static void main (String[] args) {
+  public static void main (String[] args) {
     Scanner sc = new Scanner(System.in);
-    int numServer = sc.nextInt();
-    String[] serverID = null;
-    InetAddress[] ipAddress = null;
-    int[] portNumber = null;
+    int numServer = Integer.parseInt(sc.nextLine());
+    String[] serverID = new String[numServer];
+    InetAddress[] ipAddress = new InetAddress[numServer];
+    int[] portNumber = new int[numServer];
     for (int i = 0; i < numServer; i++) {
       // TODO: parse inputs to get the ips and ports of servers
     	serverID[i] = sc.nextLine();
@@ -23,6 +22,7 @@ public static void main (String[] args) {
     	try {
 			ipAddress[i] = InetAddress.getByName(split[0]);
 	    	portNumber[i] = Integer.parseInt(split[1]);
+	    	System.out.println("\t Server "+i+"- IP Address: "+split[0] + ", Port: "+split[1]);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
