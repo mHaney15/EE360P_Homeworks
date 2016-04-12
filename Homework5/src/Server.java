@@ -37,7 +37,6 @@ public class Server {
     for (int i = 0; i < numServers; i++) {
     	// initialize V:
     	V[i] = 0;
-    	// TODO: parse inputs to get the ips and ports of servers
     	String[] line = sc.next().split(":");
     	try {
 			InetAddress address = InetAddress.getByName(line[0]);
@@ -51,15 +50,14 @@ public class Server {
 	    		Processes[i] = server.new Process(server_i);
 	    	}
     	} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			Processes[i] = null;
 		}
     }
     
-    // TODO: parse the inventory file
+    //parse the inventory file
     inventory = new Hashtable<String, Integer>();
 	orderHistory = new Vector<Order>();
 	try {
@@ -71,29 +69,36 @@ public class Server {
 				inventory.put(elements[0], new Integer(elements[1]));
 		}
 	} catch (IOException e) {
-		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
 
-    // TODO: handle request from client
-	try {	
-		while(!myServer.isClosed()){
-			
+    //handle request from client
+		
+	while(!myServer.isClosed()){
+		try {
 			Socket socket = myServer.accept();
 			BufferedReader socketIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			BufferedWriter socketOut = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-			String line = socketIn.readLine();			//"request clk pid"
-														//"ack clk pid"
-			if(line.startsWith("request")){				//"release clk pid:clk pid of queued :LINE TO EXECUTE"
+			String line = socketIn.readLine();			
+			
+			//"request clk pid"
+			//"ack clk pid"
+			//"release clk pid:clk pid of queued :LINE TO EXECUTE"
+			if(line.startsWith("request")){				
 				String[] tokens = line.split(" ");
 				TimeStamp ts = server.new TimeStamp(Integer.parseInt(tokens[1]),Integer.parseInt(tokens[2]));
 				requestQueue.add(ts);
 				V[ts.pid] = max(V[ts.pid], ts.clk);
 				V[myID] = max(V[myID], ts.clk) + 1;
 				TimeStamp myTS = server.new TimeStamp(V[myID], myID);
-				Processes[ts.pid].out.write("ack "+myTS.toString()+"\n");
-				socketOut.flush();
-				socketOut.close();
+				try{
+					Processes[ts.pid].out.write("ack "+myTS.toString()+"\n");
+					Processes[ts.pid].out.flush();
+				}
+				catch(IOException e){
+					Processes[ts.pid] = null;
+					V[ts.pid] = Integer.MAX_VALUE;
+				}
 			}
 			if(line.startsWith("ack")){
 				String[] tokens = line.split(" ");
@@ -119,23 +124,29 @@ public class Server {
 				V[myID]++;
 				TimeStamp ts = server.new TimeStamp(V[myID], myID);
 				requestQueue.add(ts);
-				for(int id = 0; id < numServers; id++){
-					if(id != myID){
-						if(Processes[id].socket.isConnected()&& !Processes[id].socket.isClosed()){
+				for(int  id = 0; id < numServers; id++){
+					if(Processes[id] != null){
+						try{
 							Processes[id].out.write("request "+ts.toString()+"\n");
 							Processes[id].out.flush();
 						}
-						else{ V[id] = Integer.MAX_VALUE;} //Crashed Server, just set to Max.
+						catch(IOException e){
+							Processes[id] = null;
+							V[id] = Integer.MAX_VALUE;
+							removeProcessTimeStamps(id);
+						}
 					}
+					//Crashed Server, just set to Max.
+					else{ V[id] = Integer.MAX_VALUE;}
 				}
 				Runnable CTH = server.new ClientTaskHandler(socket, socketOut, socketIn, ts, line);
 				pool.execute(CTH);
 			}
-		}
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} 
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	}
 	sc.close();
 
 	
@@ -270,10 +281,17 @@ public class Server {
 			in.close();
 			client.close();
 			for(int id = 0; id < numServers; id++){
-				if(id != myID){
+				if(Processes[id] != null){
 					TimeStamp tempStamp = new TimeStamp(V[id], id);//timestamp for message
-					Processes[id].out.write("release "+tempStamp.toString()+":"+ts.toString()+":"+task+"\n");
-					Processes[id].out.flush();
+					try{
+						Processes[id].out.write("release "+tempStamp.toString()+":"+ts.toString()+":"+task+"\n");
+						Processes[id].out.flush();
+					}
+					catch(IOException e){
+						Processes[id] = null;
+						V[id] = Integer.MAX_VALUE;
+						removeProcessTimeStamps(id);
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -284,6 +302,11 @@ public class Server {
 	}
 	
 	private boolean okayToExecute(){
+		
+		for(int id = 0; id < numServers; id++){
+			if(Processes[id] == null)
+				removeProcessTimeStamps(id);
+		}
 		for(TimeStamp stamp: requestQueue){
 			if(stamp.lessThan(ts)){return false;}
 		}
@@ -375,5 +398,9 @@ public class Server {
 			return x;
 		else 
 			return y;
+	}
+	
+	static synchronized void removeProcessTimeStamps(int pid){
+		requestQueue.removeIf(p -> p.pid == pid);
 	}
   }
