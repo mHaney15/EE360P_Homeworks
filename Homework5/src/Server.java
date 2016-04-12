@@ -95,7 +95,13 @@ public class Server {
 	} catch (IOException e) {
 		e.printStackTrace();
 	}
-
+	String list= "";
+	for(String key : inventory.keySet()){
+			list = list + "\t" + key + "\t\t" + inventory.get(key) + "\n";
+	}
+	System.out.println("\tITEM:\t\tSTOCK:\n");
+	System.out.print(list);
+	
     //handle request from client
 		
 	while(!myServer.isClosed()){
@@ -108,21 +114,25 @@ public class Server {
 			//"request clk pid"
 			//"ack clk pid"
 			//"release clk pid:clk pid of queued :LINE TO EXECUTE"
-			if(line.startsWith("request")){				
+			if(line.startsWith("request")){
 				String[] tokens = line.split(" ");
 				TimeStamp ts = server.new TimeStamp(Integer.parseInt(tokens[1]),Integer.parseInt(tokens[2]));
 				requestQueue.add(ts);
 				V[ts.pid] = max(V[ts.pid], ts.clk);
 				V[myID] = max(V[myID], ts.clk) + 1;
 				TimeStamp myTS = server.new TimeStamp(V[myID], myID);
+				System.out.println("\tRequest received from server "+ts.pid+".");
 				try{
 					Processes[ts.pid].out.write("ack "+myTS.toString()+"\n");
 					Processes[ts.pid].out.flush();
+					System.out.println("\tSending Acknowledgement to server "+ts.pid+".");
 				}
 				catch(IOException e){
+					System.out.println("\tServer "+ts.pid+" died. Removing from set...\n");
 					Processes[ts.pid] = null;
 					V[ts.pid] = Integer.MAX_VALUE;
 				}
+				finally{socket.close();}
 			}
 			if(line.startsWith("ack")){
 				String[] tokens = line.split(" ");
@@ -130,6 +140,7 @@ public class Server {
 				V[ts.pid] = max(V[ts.pid], ts.clk);
 				V[myID] = max(V[myID], ts.clk) + 1;
 				socket.close();
+				System.out.println("\tAcknowledgement received from server "+ts.pid+".");
 			}
 			else if(line.startsWith("release")){
 				String[] parts = line.split(":");
@@ -139,10 +150,12 @@ public class Server {
 				TimeStamp qTS = server.new TimeStamp(Integer.parseInt(qtstokens[0]),Integer.parseInt(qtstokens[1]));
 				V[msgTS.pid] = max(V[msgTS.pid], msgTS.clk);
 				V[myID] = max(V[myID], msgTS.clk) + 1;
+				System.out.println("\tReleaset received from server "+qTS.pid+".");
 				parseAndExecute(parts[2]);
 				requestQueue.remove(qTS);
 				socket.close();
 				QueueChanged.signalAll();
+				System.out.println("\tExecuted: \""+parts[2]+"\"");
 			}
 			else{
 				V[myID]++;
@@ -151,10 +164,12 @@ public class Server {
 				for(int  id = 0; id < numServers; id++){
 					if(Processes[id] != null){
 						try{
+							System.out.println("\tSending Request to server "+id+".");
 							Processes[id].out.write("request "+ts.toString()+"\n");
 							Processes[id].out.flush();
 						}
 						catch(IOException e){
+							System.out.println("\tServer "+id+" died. Removing from set...\n");
 							Processes[id] = null;
 							V[id] = Integer.MAX_VALUE;
 							removeProcessTimeStamps(id);
@@ -298,6 +313,7 @@ public class Server {
 		String result = parseAndExecute(task);
 		requestQueue.remove(ts);
 		QueueChanged.signalAll();
+		System.out.println("\tExecuted: "+task);
 		try {
 			out.write(result);
 			out.flush();
@@ -308,6 +324,7 @@ public class Server {
 				if(Processes[id] != null){
 					TimeStamp tempStamp = new TimeStamp(V[id], id);//timestamp for message
 					try{
+						System.out.println("\tSending release to server "+id+".");
 						Processes[id].out.write("release "+tempStamp.toString()+":"+ts.toString()+":"+task+"\n");
 						Processes[id].out.flush();
 					}
