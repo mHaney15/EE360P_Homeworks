@@ -22,10 +22,9 @@ public class Client {
     	try {
 			ipAddress[i] = InetAddress.getByName(split[0]);
 	    	portNumber[i] = Integer.parseInt(split[1]);
-	    	System.out.println("\t Server "+i+"- IP Address: "+split[0] + ", Port: "+split[1]);
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	    } catch (UnknownHostException e) {
+		// TODO Auto-generated catch block
+	    	e.printStackTrace();
 		}
     }
     try{
@@ -73,26 +72,23 @@ public class Client {
 	      for(int x = 0; x < numServer; x++){
 	    	  try{
 	    		  clientSocket = new Socket(ipAddress[x], portNumber[x]);
-	    		  System.out.println("\t Connected to Socket:" + ipAddress[x] + ":" + portNumber[x]);
 	    		  break;
 	    	  }catch(IOException e){
-	    		  e.printStackTrace();
 	    	  }
 	      }
 			  tcpIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 		      tcpOut = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 		      tcpOut.write(message+"\n");
 		      tcpOut.flush();
-	      	  System.out.println("\t Waiting for response...");
-		      buffer = tcpIn.readLine();
+	      	  buffer = tcpIn.readLine();
 		      while(buffer != null){
-		    	  System.out.println("\t Buffer: "+ buffer);
 		    	  response = response+buffer+"\n";
 		    	  buffer = tcpIn.readLine();
 		      }
-		      response = response.substring(0, response.length() - 1);
+		      
+		      //response = response.substring(0, response.length() - 1);
 		      clientSocket.close();
-	         
+	         System.out.print(response);
 	    }
 	    sc.close();
     } catch (IOException e) {

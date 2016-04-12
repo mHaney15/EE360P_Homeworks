@@ -13,71 +13,70 @@ public class Server {
     static Vector<Order> orderHistory;
     static AtomicInteger currentOrderID = new AtomicInteger(1); //Thread-safe.
     static ReentrantLock lock = new ReentrantLock();
-    static Condition QueueChanged = lock.newCondition();
+    static Condition checkCS = lock.newCondition();
     static Server server = new Server();
     static Executor pool = Executors.newWorkStealingPool();
     static Vector<TimeStamp> requestQueue;
-	static int myID;
-	static int numServers;
+	static Integer myID;
+	static Integer numServers;
 	static String inventoryPath;
 	
-	static Process Processes[];
-	static int V[];
+	static String[] ipA;
+	static int[] port;
+	static Integer V[];
 	
     public static void main (String[] args) {
 	Scanner sc = new Scanner(System.in);
     myID = sc.nextInt() - 1;
     numServers = sc.nextInt();
     inventoryPath = sc.next();
-    V = new int[numServers];	//direct dependency clock
-    Processes = new Process[numServers]; //Clients to send messages to other Servers.
+    V = new Integer[numServers];	//direct dependency clock
     ServerSocket myServer = null;
     requestQueue = new Vector<TimeStamp>();
     
-    String[] ipA = new String[numServers];
-    int[] port = new int[numServers];
+    ipA = new String[numServers];
+    port = new int[numServers];
     
     for (int i = 0; i < numServers; i++) {
-    	// initialize V:
+    	// initialize V, and host addresses
     	V[i] = 0;
-    	Processes[i] = null;
     	String[] line = sc.next().split(":");
     	ipA[i] = line[0];
     	port[i] = Integer.parseInt(line[1]);
     }
 
-    InetAddress address;
+    InetAddress myAddress;
 	try {
-		address = InetAddress.getByName(ipA[myID]);
-		myServer = new ServerSocket(port[myID], 0, address);
-		Processes[myID] = null;
-		System.out.println("\tServer Socket "+(myID+1)+" created Successfully!");
+		myAddress = InetAddress.getByName(ipA[myID]);
+		myServer = new ServerSocket(port[myID], 0, myAddress);
+		System.out.println("\tServer Socket "+(myID+1)+" created Successfully! IP:"+ipA[myID]+" Port:"+port[myID]+".");
 	} catch (UnknownHostException e1) {
 		e1.printStackTrace();
 	} catch (IOException e) {
 		e.printStackTrace();
 	}
-	System.out.println("\tAttempting to connect to other servers...");
-    boolean serversConnected = false;
-    while(!serversConnected){
-    	int numConnected = 0;
-	    for (int i = 0; i < numServers; i++) {
-	    	if((Processes[i] == null) && (i != myID)){
-		    	try {
-					address = InetAddress.getByName(ipA[i]);			    		
-			    	Socket server_i = new Socket(address, port[i]);
-			    	Processes[i] = server.new Process(server_i);
-			    	System.out.println("\tSocket to Server "+(i+1)+" created Successfully!");			    	
-		    	} catch (UnknownHostException e) {
-				} catch (IOException e) {
-				}
-	    	}
-	    	else {numConnected++;}
-	    }
-	    if(numConnected == numServers)
-	    	serversConnected = true;
-	    else serversConnected = false;
-    }
+
+//	System.out.println("\tAttempting to connect to other servers...");
+//    boolean serversConnected = false;
+//    while(!serversConnected){
+//    	int numConnected = 0;
+//	    for (int i = 0; i < numServers; i++) {
+//	    	if((Processes[i] == null) && (i != myID)){
+//		    	try {
+//					InetAddress address = InetAddress.getByName(ipA[i]);			    		
+//			    	Socket server_i = new Socket(address, port[i]);
+//			    	Processes[i] = server.new Connector(server_i);
+//			    	System.out.println("\tSocket to Server "+(i+1)+" created Successfully! IP:"+ipA[i]+" Port:"+port[i]+".");			    	
+//		    	} catch (UnknownHostException e) {
+//				} catch (IOException e) {
+//				}
+//	    	}
+//	    	else {numConnected++;}
+//	    }
+//	    if(numConnected == numServers)
+//	    	serversConnected = true;
+//	    else serversConnected = false;
+//    }
     
     
     //parse the inventory file
@@ -99,19 +98,18 @@ public class Server {
 	for(String key : inventory.keySet()){
 			list = list + "\t" + key + "\t\t" + inventory.get(key) + "\n";
 	}
-	System.out.println("\tITEM:\t\tSTOCK:\n");
+	System.out.println("\n\tITEM:\t\tSTOCK:");
 	System.out.print(list);
 	
     //handle request from client
 		
 	while(!myServer.isClosed()){
 		try {
-			System.out.println("\tAwaiting socket message...");
+			System.out.println("\n\tAwaiting socket message...");
 			Socket socket = myServer.accept();
 			BufferedReader socketIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			BufferedWriter socketOut = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 			String line = socketIn.readLine();			
-			System.out.println("Recieved: " +line);
 			//"request clk pid"
 			//"ack clk pid"
 			//"release clk pid:clk pid of queued :LINE TO EXECUTE"
@@ -122,26 +120,30 @@ public class Server {
 				V[ts.pid] = max(V[ts.pid], ts.clk);
 				V[myID] = max(V[myID], ts.clk) + 1;
 				TimeStamp myTS = server.new TimeStamp(V[myID], myID);
-				System.out.println("\tRequest received from server "+ts.pid+".");
+				System.out.println("\tRequest received from server "+ts.pid+": "+ts);
 				try{
-					Processes[ts.pid].out.write("ack "+myTS.toString()+"\n");
-					Processes[ts.pid].out.flush();
+					Connector responder = server.new Connector(ipA[ts.pid], port[ts.pid]);
+					responder.write("ack "+myTS.toString()+"\n");
 					System.out.println("\tSending Acknowledgement to server "+ts.pid+".");
+					responder.close();
 				}
 				catch(IOException e){
 					System.out.println("\tServer "+ts.pid+" died. Removing from set...\n");
-					Processes[ts.pid] = null;
 					V[ts.pid] = Integer.MAX_VALUE;
 				}
 				finally{socket.close();}
 			}
-			if(line.startsWith("ack")){
+			else if(line.startsWith("ack")){
 				String[] tokens = line.split(" ");
 				TimeStamp ts = server.new TimeStamp(Integer.parseInt(tokens[1]),Integer.parseInt(tokens[2]));
-				V[ts.pid] = max(V[ts.pid], ts.clk);
-				V[myID] = max(V[myID], ts.clk) + 1;
-				socket.close();
-				System.out.println("\tAcknowledgement received from server "+ts.pid+".");
+				try{
+					lock.lock();
+					V[ts.pid] = max(V[ts.pid], ts.clk);
+					V[myID] = max(V[myID], ts.clk) + 1;
+					socket.close();
+					System.out.println("\tAcknowledgement received from server "+ts.pid+": "+ts);
+					checkCS.signalAll();}
+				finally{lock.unlock();}
 			}
 			else if(line.startsWith("release")){
 				String[] parts = line.split(":");
@@ -151,39 +153,40 @@ public class Server {
 				TimeStamp qTS = server.new TimeStamp(Integer.parseInt(qtstokens[0]),Integer.parseInt(qtstokens[1]));
 				V[msgTS.pid] = max(V[msgTS.pid], msgTS.clk);
 				V[myID] = max(V[myID], msgTS.clk) + 1;
-				System.out.println("\tReleaset received from server "+qTS.pid+".");
+				System.out.println("\tRelease received from server "+qTS.pid+".");
 				parseAndExecute(parts[2]);
 				requestQueue.remove(qTS);
 				socket.close();
-				QueueChanged.signalAll();
+				try{lock.lock();
+				checkCS.signalAll();}
+				finally{lock.unlock();}
 				System.out.println("\tExecuted: \""+parts[2]+"\"");
 			}
 			else{
+				
 				V[myID]++;
 				TimeStamp ts = server.new TimeStamp(V[myID], myID);
 				requestQueue.add(ts);
 				for(int  id = 0; id < numServers; id++){
-					if(Processes[id] != null){
+					if((V[id] < Integer.MAX_VALUE) && (id != myID)){
 						try{
 							System.out.println("\tSending Request to server "+id+".");
-							Processes[id].out.write("request "+ts.toString()+"\n");
-							Processes[id].out.flush();
+							Connector responder = server.new Connector(ipA[id], port[id]);
+							responder.write("request "+ts.toString()+"\n");
+							responder.close();
 						}
 						catch(IOException e){
 							System.out.println("\tServer "+id+" died. Removing from set...\n");
-							Processes[id] = null;
 							V[id] = Integer.MAX_VALUE;
 							removeProcessTimeStamps(id);
 						}
 					}
-					//Crashed Server, just set to Max.
-					else{ V[id] = Integer.MAX_VALUE;}
 				}
+				System.out.println("\tSpawning thread to handle client request...");
 				Runnable CTH = server.new ClientTaskHandler(socket, socketOut, socketIn, ts, line);
 				pool.execute(CTH);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 	}
@@ -192,36 +195,33 @@ public class Server {
 	
   }
 
-  public class Process{
+  public class Connector{
 	  Socket socket;
 	  BufferedWriter out;
 	  BufferedReader in;
-	  Process(Socket s){
-		  socket = s;
-		  try {
-			out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		  } catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		  }
+	  Connector(String ip, Integer port) throws IOException{
+		  InetAddress address= InetAddress.getByName(ip);
+		  socket = new Socket(address, port);
+		  out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+		  in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 	  }
-	  void close(){
-		  try {
-			  in.close();
-			  out.close();
-			  socket.close();
-		  } catch (IOException e) {
-			  // TODO Auto-generated catch block
-			  e.printStackTrace();
-		  }
+	  
+	  void write(String message) throws IOException{
+		  out.write(message);
+		  out.flush();
+	  }
+	 
+	  void close() throws IOException{
+		  in.close();
+		  out.close();
+		  socket.close();
 	  }
   }
   
   public class TimeStamp{
-	  int clk;
-	  int pid;
-	  TimeStamp(int c, int p){
+	  Integer clk;
+	  Integer pid;
+	  TimeStamp(Integer c, Integer p){
 		  clk = c;
 		  pid = p;
 	  }
@@ -239,19 +239,19 @@ public class Server {
   }
   
   public class Order implements Comparable<Order>{
-		int orderID;
+		Integer orderID;
 		String username;
 		String productName;
-		int quantity;
+		Integer quantity;
 		
-		Order(int orderID, String username, String productName, int quantity){
+		Order(Integer orderID, String username, String productName, Integer quantity){
 			this.orderID = orderID;
 			this.username = username;
 			this.productName = productName;
 			this.quantity = quantity;
 		}
 
-		public int getOrderID() {
+		public Integer getOrderID() {
 			return orderID;
 		}
 
@@ -262,7 +262,7 @@ public class Server {
 			return productName;
 		}
 
-		public int getQuantity() {
+		public Integer getQuantity() {
 			return quantity;
 		}
 		public String toStringNoName(){
@@ -305,7 +305,7 @@ public class Server {
 		lock.lock();
 		while(!okayToExecute()){
 			try {
-				QueueChanged.await();
+				checkCS.await();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -313,7 +313,6 @@ public class Server {
 		}
 		String result = parseAndExecute(task);
 		requestQueue.remove(ts);
-		QueueChanged.signalAll();
 		System.out.println("\tExecuted: "+task);
 		try {
 			out.write(result);
@@ -322,31 +321,33 @@ public class Server {
 			in.close();
 			client.close();
 			for(int id = 0; id < numServers; id++){
-				if(Processes[id] != null){
+				if((V[id] < Integer.MAX_VALUE)&&(id != myID)){
 					TimeStamp tempStamp = new TimeStamp(V[id], id);//timestamp for message
 					try{
 						System.out.println("\tSending release to server "+id+".");
-						Processes[id].out.write("release "+tempStamp.toString()+":"+ts.toString()+":"+task+"\n");
-						Processes[id].out.flush();
+						Connector responder = server.new Connector(ipA[id], port[id]);
+						responder.write("release "+tempStamp.toString()+":"+ts.toString()+":"+task+"\n");
+						responder.close();
 					}
 					catch(IOException e){
-						Processes[id] = null;
 						V[id] = Integer.MAX_VALUE;
 						removeProcessTimeStamps(id);
 					}
 				}
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		finally{lock.unlock();}
+		finally{
+			checkCS.signalAll();
+			lock.unlock();
+		}
 	}
 	
 	private boolean okayToExecute(){
 		
 		for(int id = 0; id < numServers; id++){
-			if(Processes[id] == null)
+			if(V[id] == Integer.MAX_VALUE)
 				removeProcessTimeStamps(id);
 		}
 		for(TimeStamp stamp: requestQueue){
@@ -435,14 +436,14 @@ public class Server {
 		return response;
 	}
 	
-	static int max(int x, int y){
+	static Integer max(Integer x, Integer y){
 		if(x >= y)
 			return x;
 		else 
 			return y;
 	}
 	
-	static synchronized void removeProcessTimeStamps(int pid){
+	static synchronized void removeProcessTimeStamps(Integer pid){
 		requestQueue.removeIf(p -> p.pid == pid);
 	}
   }

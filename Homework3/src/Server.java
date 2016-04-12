@@ -110,6 +110,8 @@ public class Server {
 	}
 	
 	public class TCPSocketHandler implements Runnable{
+		
+		
 		private class TCPsocketInterpreter implements Runnable{
 			Socket socket;
 			TCPsocketInterpreter(Socket socket){
